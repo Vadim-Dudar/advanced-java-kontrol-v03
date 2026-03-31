@@ -7,6 +7,7 @@ public class Order {
     private final String id;
     private final Email customerEmail;
     private final OrderItem[] items;
+    private OrderStatus status = OrderStatus.NEW;
 
     public Order(String id, Email customerEmail) {
         this(id, customerEmail, new OrderItem[0]);
@@ -36,7 +37,32 @@ public class Order {
     }
 
     public OrderItem[] getItems() {
+        // Defensive copy when returning array
         return Arrays.copyOf(items, items.length);
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void pay() {
+        if (status != OrderStatus.NEW) throw new IllegalStateException("Can only pay NEW orders");
+        status = OrderStatus.PAID;
+    }
+
+    public void ship() {
+        if (status != OrderStatus.PAID) throw new IllegalStateException("Can only ship PAID orders");
+        status = OrderStatus.SHIPPED;
+    }
+
+    public void deliver() {
+        if (status != OrderStatus.SHIPPED) throw new IllegalStateException("Can only deliver SHIPPED orders");
+        status = OrderStatus.DELIVERED;
+    }
+
+    public void cancel() {
+        if (status != OrderStatus.NEW) throw new IllegalStateException("Can only cancel NEW orders");
+        status = OrderStatus.CANCELLED;
     }
 
     public Money calculateTotal() {

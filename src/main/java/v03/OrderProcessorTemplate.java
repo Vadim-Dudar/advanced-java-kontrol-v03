@@ -7,13 +7,16 @@ public abstract class OrderProcessorTemplate {
     public final void process(Order order, PaymentMethod paymentMethod) {
         logger.info("Template process started for order: " + order.getId());
         validate(order);
+        reserveStock(order);
         Money total = calculateTotal(order);
         pay(total, paymentMethod);
+        order.pay();
         completeOrder(order);
     }
 
     // Abstract steps to be implemented by concrete classes
     protected abstract void validate(Order order);
+    protected abstract void reserveStock(Order order);
     protected abstract void pay(Money total, PaymentMethod paymentMethod);
 
     protected Money calculateTotal(Order order) {

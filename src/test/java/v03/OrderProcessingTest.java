@@ -87,11 +87,94 @@ class OrderProcessingTest {
     @Test
     void shouldSuccessfullyProcessOrder() {
         Order order = new Order("ORDER-004", new Email("success@test.com"), new OrderItem[]{
-                new OrderItem("Mouse", 2, new Money(new BigDecimal("20")))
+                new OrderItem("Mouse", 20, new Money(new BigDecimal("20"))) // Total = 400 (>= 300 for PayPal)
         });
         orderRepository.save(order);
 
         assertDoesNotThrow(() -> orderService.processOrder("ORDER-004", new PayPalPayment()));
+        assertEquals(OrderStatus.PAID, order.getStatus());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenMoreThan10Items() {
+        OrderItem[] items = new OrderItem[11];
+        for (int i = 0; i < 11; i++) {
+            items[i] = new OrderItem("Item " + i, 1, new Money(new BigDecimal("10")));
+        }
+        Order order = new Order("ORDER-MAX-ITEMS", new Email("a@b.com"), items);
+        orderRepository.save(order);
+
+        assertThrows(ValidationException.class, () -> orderService.processOrder("ORDER-MAX-ITEMS", new BankTransferPayment()));
+    }
+
+    @Test
+    void shouldApplyDiscountWhenTotalExceeds10000() {
+        Order order = new Order("ORDER-DISCOUNT", new Email("discount@test.com"), new OrderItem[]{
+                new OrderItem("Server", 1, new Money(new BigDecimal("12000")))
+        });
+        orderRepository.save(order);
+        
+        // Custom payment method to intercept amount
+        final Money[] chargedAmount = new Money[1];
+        PaymentMethod spyPayment = amount -> {
+            chargedAmount[0] = amount;
+            return true;
+        };
+        
+        orderService.processOrder("ORDER-DISCOUNT", spyPayment);
+        assertEquals(new BigDecimal("11400.00"), chargedAmount[0].getAmount().setScale(2)); // 5% off 12000
+    }
+
+    @Test
+    void shouldThrowOutOfStockExceptionIfItemStockNotAvailable() {
+        Order order = new Order("ORDER-OOS", new Email("stock@test.com"), new OrderItem[]{
+                new OrderItem("OUT_OF_STOCK", 1, new Money(new BigDecimal("100")))
+        });
+        orderRepository.save(order);
+
+        assertThrows(OutOfStockException.class, () -> orderService.processOrder("ORDER-OOS", new CreditCardPayment()));
+    }
+
+    @Test
+    void shouldTestStateTransitionsAndCancel() {
+        Order order = new Order("ORDER-STATE", new Email("state@test.com"));
+        assertEquals(OrderStatus.NEW, order.getStatus());
+        
+        order.cancel(); // cancelling from NEW is allowed
+        assertEquals(OrderStatus.CANCELLED, order.getStatus());
+
+        Order validOrder = new Order("ORDER-STATE-2", new Email("state2@test.com"));
+        validOrder.pay();
+        assertEquals(OrderStatus.PAID, validOrder.getStatus());
+        
+        validOrder.ship();
+        assertEquals(OrderStatus.SHIPPED, validOrder.getStatus());
+        
+        validOrder.deliver();
+        assertEquals(OrderStatus.DELIVERED, validOrder.getStatus());
+
+        // Cancel from delivered throws exception
+        assertThrows(IllegalStateException.class, validOrder::cancel);
+    }
+
+    @Test
+    void shouldThrowPaymentExceptionWhenPayPalAmountLessThan300() {
+        Order order = new Order("ORDER-PPL", new Email("test@test.com"), new OrderItem[]{
+                new OrderItem("Cable", 1, new Money(new BigDecimal("100")))
+        });
+        orderRepository.save(order);
+
+        assertThrows(PaymentException.class, () -> orderService.processOrder("ORDER-PPL", new PayPalPayment()));
+    }
+
+    @Test
+    void shouldThrowPaymentExceptionWhenCreditCardAmountExceeds30000() {
+        Order order = new Order("ORDER-CC-MAX", new Email("test@test.com"), new OrderItem[]{
+                new OrderItem("Expensive", 1, new Money(new BigDecimal("50000"))) // Will get discount but still > 30000 (47500)
+        });
+        orderRepository.save(order);
+
+        assertThrows(PaymentException.class, () -> orderService.processOrder("ORDER-CC-MAX", new CreditCardPayment()));
     }
 
     @Test
@@ -161,4 +244,3 @@ class OrderProcessingTest {
         assertEquals(moneyA.hashCode(), moneyB.hashCode());
     }
 }
-
