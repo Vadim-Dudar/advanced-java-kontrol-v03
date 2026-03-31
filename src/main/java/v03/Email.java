@@ -6,7 +6,7 @@ public final class Email {
     private final String address;
 
     public Email(String address) {
-        if (address == null || !address.contains("@")) {
+        if (address == null || !address.contains("@") || address.indexOf("@") == 0 || address.indexOf("@") == address.length() - 1) {
             throw new IllegalArgumentException("Invalid email address");
         }
         this.address = address;
@@ -36,4 +36,3 @@ public final class Email {
                 '}';
     }
 }
-
