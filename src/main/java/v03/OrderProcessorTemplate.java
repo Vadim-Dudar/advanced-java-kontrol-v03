@@ -1,15 +1,22 @@
 package v03;
 
 public abstract class OrderProcessorTemplate {
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(OrderProcessorTemplate.class.getName());
     
+    // final template method
     public final void process(Order order, PaymentMethod paymentMethod) {
+        logger.info("Template process started for order: " + order.getId());
         validate(order);
+        reserveStock(order);
         Money total = calculateTotal(order);
         pay(total, paymentMethod);
+        order.pay();
         completeOrder(order);
     }
 
+    // Abstract steps to be implemented by concrete classes
     protected abstract void validate(Order order);
+    protected abstract void reserveStock(Order order);
     protected abstract void pay(Money total, PaymentMethod paymentMethod);
 
     protected Money calculateTotal(Order order) {
@@ -21,4 +28,3 @@ public abstract class OrderProcessorTemplate {
         System.out.println("Order " + order.getId() + " is completed. Notification sent to " + order.getCustomerEmail().getAddress());
     }
 }
-

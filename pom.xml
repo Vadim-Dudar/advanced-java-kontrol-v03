@@ -6,6 +6,35 @@
   <version>1.0-SNAPSHOT</version>
   <name>Archetype - advanced-java-kontrol-v03</name>
   <url>http://maven.apache.org</url>
+
+  <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <maven.compiler.source>11</maven.compiler.source>
+      <maven.compiler.target>11</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+      <!-- JUnit 5 -->
+      <dependency>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter-api</artifactId>
+          <version>5.10.1</version>
+          <scope>test</scope>
+      </dependency>
+      <dependency>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter-params</artifactId>
+          <version>5.10.1</version>
+          <scope>test</scope>
+      </dependency>
+      <dependency>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter-engine</artifactId>
+          <version>5.10.1</version>
+          <scope>test</scope>
+      </dependency>
+  </dependencies>
+
     <build>
         <plugins>
             <plugin>

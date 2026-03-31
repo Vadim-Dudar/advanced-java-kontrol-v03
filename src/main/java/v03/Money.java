@@ -33,6 +33,10 @@ public final class Money {
         return new Money(this.amount.multiply(BigDecimal.valueOf(multiplier)));
     }
 
+    public Money multiply(BigDecimal multiplier) {
+        return new Money(this.amount.multiply(multiplier));
+    }
+
     public BigDecimal getAmount() {
         return amount;
     }

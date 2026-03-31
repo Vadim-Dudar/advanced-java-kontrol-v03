@@ -8,7 +8,7 @@ public class OrderItem {
     private final Money unitPrice;
 
     public OrderItem(String productName, int quantity, Money unitPrice) {
-        if (productName == null || productName.isEmpty()) {
+        if (productName == null || productName.trim().isEmpty()) {
             throw new IllegalArgumentException("Product name cannot be blank");
         }
         if (quantity <= 0) {
@@ -62,4 +62,3 @@ public class OrderItem {
                 '}';
     }
 }
-
